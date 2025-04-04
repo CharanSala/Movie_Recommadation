@@ -52,6 +52,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+ALLOWED_HOSTS = ['movie-recommadation.onrender.com', '127.0.0.1']
+
 ROOT_URLCONF = 'my_movie.urls'
 CORS_ALLOW_ALL_ORIGINS = True
 
