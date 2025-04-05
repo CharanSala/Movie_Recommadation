@@ -1,5 +1,6 @@
 import pandas as pd
 import requests
+import difflib  
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -22,9 +23,10 @@ cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 def fetch_poster(title):
     try:
         title = title.lower()
+        print(title)
         url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={title}"
         response = requests.get(url).json()
-        print(f"TMDB response for '{title}':", response)  # Debug log
+        
 
         # Check if 'results' exists and has at least one item
         if response.get("results") and len(response["results"]) > 0:
@@ -38,31 +40,37 @@ def fetch_poster(title):
 
 
 @csrf_exempt
-def recommend_movies(request):
+def recommend_movies(request): 
     if request.method == "GET":
         movie_name = request.GET.get("title")
+        movie_name = movie_name.lower() if movie_name else ""
 
-        if movie_name not in movies['title'].values:
+        # Find close match to the movie title in the dataset
+        all_titles = movies['title'].str.lower().tolist()
+        close_matches = difflib.get_close_matches(movie_name, all_titles, n=1, cutoff=0.6)
+
+        if not close_matches:
             return JsonResponse({"error": "Movie not found"}, status=404)
 
-        # Get index of the searched movie
-        idx = movies[movies['title'] == movie_name].index[0]
+        matched_movie_name = close_matches[0]
+
+        # Get index of the matched movie
+        idx = movies[movies['title'].str.lower() == matched_movie_name].index[0]
 
         # Get similarity scores
         sim_scores = list(enumerate(cosine_sim[idx]))
         sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-        # Exclude the searched movie itself and take top 5 similar
+        # Exclude the matched movie itself and take top 5 similar
         recommended_movie_indices = [i[0] for i in sim_scores if i[0] != idx][:5]
 
-        # Prepare response starting with the searched movie
-        searched_movie_poster = fetch_poster(movie_name)
+        # Prepare response
+        searched_movie_poster = fetch_poster(matched_movie_name)
         recommendations = [{
-            "title": movie_name,
+            "title": matched_movie_name,
             "poster": searched_movie_poster
         }]
 
-        # Add top 5 similar movies
         for index in recommended_movie_indices:
             title = movies.iloc[index]['title']
             poster_url = fetch_poster(title)
