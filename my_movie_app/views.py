@@ -11,6 +11,7 @@ TMDB_API_KEY = "23a06b4557ab8c23deb7834bd0129046"
 
 # Load cleaned dataset
 movies = pd.read_csv("cleaned_movies.csv")
+movies['title'] = movies['title'].str.lower() 
 movies['tags'] = movies['tags'].fillna('')
 
 # TF-IDF and Cosine Similarity
@@ -20,6 +21,7 @@ cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
 def fetch_poster(title):
     try:
+        title = title.lower()
         url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={title}"
         response = requests.get(url).json()
         print(f"TMDB response for '{title}':", response)  # Debug log
