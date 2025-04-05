@@ -1,6 +1,7 @@
 import pandas as pd
 import requests
 import difflib  
+from fuzzywuzzy import fuzz
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -40,19 +41,29 @@ def fetch_poster(title):
 
 
 @csrf_exempt
+
+
 def recommend_movies(request): 
     if request.method == "GET":
         movie_name = request.GET.get("title")
         movie_name = movie_name.lower() if movie_name else ""
 
-        # Find close match to the movie title in the dataset
+        # Get all titles from dataset in lowercase
         all_titles = movies['title'].str.lower().tolist()
-        close_matches = difflib.get_close_matches(movie_name, all_titles, n=1, cutoff=0.6)
 
-        if not close_matches:
+        # Find the best matching title using fuzzy matching
+        best_score = 0
+        matched_movie_name = None
+
+        for title in all_titles:
+            score = fuzz.token_set_ratio(movie_name, title)
+            if score > best_score:
+                best_score = score
+                matched_movie_name = title
+
+        # If no close match is found
+        if best_score < 70:
             return JsonResponse({"error": "Movie not found"}, status=404)
-
-        matched_movie_name = close_matches[0]
 
         # Get index of the matched movie
         idx = movies[movies['title'].str.lower() == matched_movie_name].index[0]
