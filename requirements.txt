@@ -3,12 +3,16 @@ certifi==2025.1.31
 charset-normalizer==3.4.1
 Django==5.2
 django-cors-headers==4.7.0
+fuzzywuzzy==0.18.0
 idna==3.10
 joblib==1.4.2
+Levenshtein==0.27.1
 numpy==2.2.4
 pandas==2.2.3
 python-dateutil==2.9.0.post0
+python-Levenshtein==0.27.1
 pytz==2025.2
+RapidFuzz==3.13.0
 requests==2.32.3
 scikit-learn==1.6.1
 scipy==1.15.2
